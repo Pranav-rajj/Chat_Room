@@ -21,7 +21,7 @@ def close_connection(client,addr,Name):
     encoded_message = json.dumps([1,0,Name])
     broadcast(Name,encoded_message)
 
-def communication_handel(client,addr,Name):
+def communication_handle(client,addr,Name):
     global stop_thread
     while True:
         task = client.recv(1024).decode('utf-8')
@@ -35,7 +35,6 @@ def communication_handel(client,addr,Name):
             broadcast(Name,encoded_message)
 
         elif task == '2':
-            # mutex.acquire()
             file_name = client.recv(1024).decode('utf-8').strip()
             
             if not file_name:
@@ -62,10 +61,12 @@ def communication_handel(client,addr,Name):
                 for i in client_Name:
                     if i!= Name:
                         client_Name[i][0].send(data)
-            
-            # mutex.release()
+        elif task == '3':
+            close_connection(client,addr,Name)
+            break
 
-def connection_handel(client,addr):
+
+def connection_handle(client,addr):
     limit = 0
     while True:
         client.send("Name".ljust(1024).encode('utf-8'))
@@ -84,14 +85,14 @@ def connection_handel(client,addr):
             encoded_message = json.dumps([1,1,Name])
             broadcast(Name,encoded_message)
             break
-    communication_handel(client,addr,Name)
+    communication_handle(client,addr,Name)
 
 
 def connect():
     server.listen()
     while True:
         client,addr = server.accept()
-        thread_receive = threading.Thread(target=connection_handel,args=(client,addr))
+        thread_receive = threading.Thread(target=connection_handle,args=(client,addr))
         thread_receive.start()
 
 print("The server is ready to receive")

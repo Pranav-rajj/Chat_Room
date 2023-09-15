@@ -16,7 +16,7 @@ def new_name():
     Name = input("Enter your name: ")
 
 #handles connection with server
-def handler():
+def connection_handle():
     new_name()
     while True:
         received_message = client.recv(1024).decode('utf-8')
@@ -37,7 +37,7 @@ def handler():
 stop_thread = False
 
 #function for receiving messages
-def receive():
+def receiver():
     global stop_thread
     while True:
         received_message = client.recv(1024).decode('utf-8')
@@ -45,6 +45,7 @@ def receive():
             stop_thread = True        
         if stop_thread:
             break
+        
         decoded_message = json.loads(received_message)
         if decoded_message[0] == 1:
             if decoded_message[1] == 0:
@@ -53,21 +54,25 @@ def receive():
                 print(f"{decoded_message[2]} joined the chat")
             else:
                 print(f"{decoded_message[2]}: {decoded_message[3]}")
+
         elif decoded_message[0] == 2:
             mutex.acquire()
-            with open(f"/home/pranav/coding/cn/Socket_programming/{decoded_message[2]}",'wb') as image_file:
+            with open(f"{decoded_message[2]}",'wb') as image_file:
                 file_len = int(client.recv(1024).decode('utf-8').strip())
+                
                 while file_len > 0:
                     data = client.recv(1024)
                     file_len -= len(data)
                     if not data:
                         break
                     image_file.write(data)
+                
                 print(f'The file has been received form {decoded_message[1]}')
+            
             mutex.release()
 
 #function for sending messages
-def send():
+def sender():
     global stop_thread
     while True:
         if stop_thread:
@@ -90,14 +95,17 @@ def send():
                         break
                     client.send(data)
             print('The file has been sent')
+        elif task == 3:
+            client.send("3".encode('utf-8'))
+            exit()
 
-handler()
+connection_handle()
 
 #creating thread for receiving messages
-thread_receive = threading.Thread(target=receive)
+thread_receive = threading.Thread(target=receiver)
 thread_receive.start()
 
-send()
+sender()
 
 print("Client is closed")
 client.close()
