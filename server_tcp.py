@@ -3,8 +3,6 @@ import threading
 import json
 import os
 
-mutex = threading.Lock()
-
 serverport = 12004
 server = socket(AF_INET , SOCK_STREAM)
 server.bind(('',serverport))
